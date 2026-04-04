@@ -404,39 +404,8 @@ npm run start:dev
 
 다음 도구들이 설치되어 있어야 합니다:
 
-- **Docker**: 컨테이너 이미지 빌드 및 실행
+- **Docker**: 컨테이너 이미지 빌드 및 실행, 로컬 Kubernetes 클러스터 활성화
 - **kubectl**: Kubernetes 클러스터 관리
-- **minikube**: 로컬 Kubernetes 클러스터 (또는 다른 Kubernetes 클러스터)
-
-#### minikube 설치 및 시작
-
-**Windows (PowerShell)**:
-```powershell
-# Chocolatey를 통한 설치
-choco install minikube
-
-# 또는 직접 다운로드
-# https://minikube.sigs.k8s.io/docs/start/
-
-# minikube 시작
-minikube start
-
-# Docker 환경을 minikube로 설정
-minikube docker-env | Invoke-Expression
-```
-
-**Linux/macOS**:
-```bash
-# minikube 설치 (예: Linux)
-curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-sudo install minikube-linux-amd64 /usr/local/bin/minikube
-
-# minikube 시작
-minikube start
-
-# Docker 환경을 minikube로 설정
-eval $(minikube docker-env)
-```
 
 ### 1. Docker 이미지 빌드
 
@@ -497,14 +466,6 @@ docker build -f dashboard-update-service/Dockerfile -t dashboard-update-service:
 
 **주의사항**:
 - **빌드 컨텍스트**: 모든 빌드는 루트 디렉토리(`count/src/`)에서 실행해야 합니다.
-- **minikube 사용 시**: `minikube docker-env`를 실행하여 Docker 환경을 minikube로 설정해야 합니다.
-  ```powershell
-  # Windows PowerShell
-  minikube docker-env | Invoke-Expression
-  
-  # Linux/macOS
-  eval $(minikube docker-env)
-  ```
 - **공통 모듈**: Dockerfile이 자동으로 공통 모듈(`common/count-info`, `common/count-value`)을 빌드하고 포함합니다.
 
 ### 2. Kubernetes 배포
@@ -609,47 +570,10 @@ kubectl logs -f deployment/count-write-service -n count-system
 
 ### 4. 서비스 접근
 
-#### minikube를 사용하는 경우
+#### NGINX Ingress Controller 설치
 
-**포트 포워딩을 통한 접근**:
 ```bash
-# Count 저장 서비스
-kubectl port-forward service/count-write-service 3000:3000 -n count-system
-
-# Count 조회 서비스
-kubectl port-forward service/count-read-service 3001:3001 -n count-system
-
-# Count 관리 서비스
-kubectl port-forward service/count-management-service 3002:3002 -n count-system
-
-# Count 분석 서비스
-kubectl port-forward service/count-analysis-service 3003:3003 -n count-system
-
-# 대시보드 제공 서비스
-kubectl port-forward service/dashboard-provision-service 3004:3004 -n count-system
-
-# 대시보드 갱신 서비스
-kubectl port-forward service/dashboard-update-service 3005:3005 -n count-system
-```
-
-**minikube service를 통한 접근**:
-```bash
-# minikube service로 서비스 URL 확인
-minikube service count-write-service -n count-system
-minikube service count-read-service -n count-system
-minikube service dashboard-provision-service -n count-system
-```
-
-**Ingress를 통한 접근** (Ingress Controller가 설치된 경우):
-```bash
-# Ingress Controller 설치 (예: NGINX Ingress)
-minikube addons enable ingress
-
-# Ingress 배포
-kubectl apply -f k8s/ingress/ingress.yaml
-
-# Ingress 접근
-minikube tunnel
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
 
 # 브라우저에서 접근
 # http://localhost/api/v1/counts
@@ -749,15 +673,6 @@ http://localhost:3003
 
 # 대시보드 UI
 http://localhost:3004
-```
-
-**minikube를 사용하는 경우**:
-
-```bash
-# 포트 포워딩 후 브라우저에서 접근
-kubectl port-forward service/count-management-service 3002:3002 -n count-system
-kubectl port-forward service/count-analysis-service 3003:3003 -n count-system
-kubectl port-forward service/dashboard-provision-service 3004:3004 -n count-system
 ```
 
 #### 5.4. Kubernetes 상태 확인
@@ -969,8 +884,7 @@ kubectl delete namespace count-system --ignore-not-found=true
 - **Docker**: 최신 버전
 - **kubectl**: 1.24 이상
 - **Kubernetes 클러스터**: 
-  - minikube (로컬 개발)
-  - 또는 기타 Kubernetes 클러스터 (운영 환경)
+  - Docker Kubernetes 클러스터 (운영 환경)
 - **최소 리소스 요구사항**:
   - CPU: 4 코어
   - 메모리: 8GB RAM
